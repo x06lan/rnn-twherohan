@@ -6,7 +6,7 @@ def parse_corpus(path, seq_length=50):
     '''Parse raw corpus text into input-output pairs, where input is a sequence of characters, output is 1 character after the sequence'''
 
     # Read text
-    with open(path, 'r') as f:
+    with open(path, 'r',encoding="utf-8") as f:
         raw_text = f.read().replace('\n', '')
 
     # Get unique characters

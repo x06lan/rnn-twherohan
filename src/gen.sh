@@ -10,4 +10,4 @@ ep=30
 
 f="sl$sl-bs$bs-ed$ed-hd$hd-lr$lr-dr$dr-ep$ep"
 
-python3 -m generate_text.gen ../output/model/$f/corpus.bin ../output/model/$f/model.bin --n-sent 10
+python -m generate_text.gen ../output/model/corpus.bin ../output/model/model.bin --n-sent 10

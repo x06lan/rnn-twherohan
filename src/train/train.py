@@ -9,7 +9,8 @@ from torch.autograd import Variable
 from .data import parse_corpus, format_data
 from .model import Net
 
-
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+print(device)
 def load_data(path, seq_length, batch_size):
     dataX, dataY, char_to_int, int_to_char, chars = parse_corpus(path, seq_length=seq_length)
     data = format_data(dataX, dataY, n_classes=len(chars), batch_size=batch_size)
@@ -24,7 +25,7 @@ def train(model, optimizer, epoch, data, log_interval):
     model.train()
 
     for batch_i, (seq_in, target) in enumerate(data):
-        seq_in, target = Variable(seq_in), Variable(target)
+        seq_in, target = Variable(seq_in).to(device), Variable(target).to(device)
         optimizer.zero_grad()
 
         output = model(seq_in)
@@ -34,7 +35,8 @@ def train(model, optimizer, epoch, data, log_interval):
 
         # Log training status
         if batch_i % log_interval == 0:
-            print('Train epoch: {} ({:2.0f}%)\tLoss: {:.6f}'.format(epoch, 100. * batch_i / len(data), loss.data[0]))
+            print('Train epoch: {} ({:2.0f}%)\tLoss: {:.6f}'.format(epoch, 100. * batch_i / len(data), loss.data.item()))
+            # print(epoch,batch_i,loss.item())
 
 if __name__ == '__main__':
     # Parse arguments
@@ -53,7 +55,7 @@ if __name__ == '__main__':
                         help='learning rate (default: 0.0001)')
     parser.add_argument('--dropout', type=float, default=0.2, metavar='DR',
                         help='dropout rate (default: 0.2)')
-    parser.add_argument('--epochs', type=int, default=30, metavar='N',
+    parser.add_argument('--epochs', type=int, default=50, metavar='N',
                         help='number of epochs to train (default: 30)')
     parser.add_argument('--log-interval', type=int, default=10, metavar='N',
                         help='number of batches to wait before logging status (default: 10)')
@@ -64,22 +66,28 @@ if __name__ == '__main__':
     parser.add_argument('--output-c', type=str, default='corpus.bin', metavar='F',
                         help='output corpus related file (mappings & vocab)')
     args = parser.parse_args()
-
+    print(args)
     # Prepare
     train_data, dataX, dataY, char_to_int, int_to_char, chars = load_data(args.corpus, seq_length=args.seq_length, batch_size=args.batch_size)
-    model = Net(len(chars), args.embedding_dim, args.hidden_dim, dropout=args.dropout)
+    model = Net(len(chars), args.embedding_dim, args.hidden_dim, dropout=args.dropout).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
+    try:
+        # Train
+        for epoch in range(args.epochs):
+            train(model, optimizer, epoch, train_data, log_interval=args.log_interval)
 
-    # Train
-    for epoch in range(args.epochs):
-        train(model, optimizer, epoch, train_data, log_interval=args.log_interval)
-
-        if (epoch + 1) % args.save_interval == 0:
-            model.eval()
-            torch.save(model, args.output)
-
+            if (epoch + 1) % args.save_interval == 0:
+                model.eval()
+                torch.save(model, args.output)
+                print("arg: eporh {} save_interval {}".format(epoch,args.save_interval))
+        
+        save_pickle((dataX, char_to_int, int_to_char, chars), args.output_c)
+        model.eval()
+        torch.save(model, args.output)
+    except:
+        save_pickle((dataX, char_to_int, int_to_char, chars), args.output_c)
+        torch.save(model, args.output)
+        print("save")
+        print("error")
     # Save mappings, vocabs, & model
-    save_pickle((dataX, char_to_int, int_to_char, chars), args.output_c)
 
-    model.eval()
-    torch.save(model, args.output)

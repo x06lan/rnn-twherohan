@@ -5,6 +5,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 from torch.autograd import Variable
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 def load_pickle(path):
@@ -34,10 +35,10 @@ def gen_text(model, patterns, char_to_int, int_to_char, chars, n_sent=10, restar
         seq_in = np.array(pattern)
         seq_in = seq_in.reshape(1, -1) # batch_size = 1
 
-        seq_in = Variable(torch.LongTensor(seq_in))
+        seq_in = Variable(torch.LongTensor(seq_in)).to(device)
 
         # Predict next character
-        pred = model(seq_in)
+        pred = model(seq_in).to(device)
         pred = to_prob(F.softmax(pred, dim=1).data[0].numpy()) # turn into probability distribution
         char = np.random.choice(chars, p=pred)                 # pick char based on probability instead of always picking the highest value
         char_idx = char_to_int[char]
