@@ -57,7 +57,7 @@ if __name__ == '__main__':
                         help='dropout rate (default: 0.2)')
     parser.add_argument('--epochs', type=int, default=30, metavar='N',
                         help='number of epochs to train (default: 30)')
-    parser.add_argument('--log-interval', type=int, default=10, metavar='N',
+    parser.add_argument('--log-interval', type=int, default=50, metavar='N',
                         help='number of batches to wait before logging status (default: 10)')
     parser.add_argument('--save-interval', type=int, default=10, metavar='N',
                         help='number of epochs to wait before saving model (default: 10)')
